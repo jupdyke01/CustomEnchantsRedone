@@ -48,7 +48,6 @@ public class Results {
 		meta.setOwningPlayer(p);
 		skull.setItemMeta(meta);
 		location.getWorld().dropItem(location, skull);
-		
 	}
 	
 	

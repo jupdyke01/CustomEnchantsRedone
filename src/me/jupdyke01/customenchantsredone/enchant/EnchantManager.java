@@ -14,14 +14,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import me.jupdyke01.customenchantsredone.Main;
 import me.jupdyke01.customenchantsredone.enchant.enums.EnchantTrigger;
-import me.jupdyke01.customenchantsredone.enchant.enums.EnchantType;
 import me.jupdyke01.customenchantsredone.enchant.utils.EnchantUtils;
 import me.jupdyke01.customenchantsredone.enchant.utils.Lang;
 import net.md_5.bungee.api.ChatColor;
 
 public class EnchantManager {
 
-	private ArrayList<Enchantment> enchants = new ArrayList<>();
+	private ArrayList<ActiveEnchantment> enchants = new ArrayList<>();
 
 	private Main main;
 
@@ -29,7 +28,7 @@ public class EnchantManager {
 		this.main = main;
 	}
 
-	public int getEnchantLevelOnItem(ItemStack item, Enchantment enchant) {
+	public int getEnchantLevelOnItem(ItemStack item, ActiveEnchantment enchant) {
 		if (item.hasItemMeta())
 			if (item.getItemMeta().hasLore())
 				for (String loreLine : item.getItemMeta().getLore()) {
@@ -41,7 +40,7 @@ public class EnchantManager {
 		return 0;
 	}
 
-	public void unEnchantItem(ItemStack item, Enchantment enchant) {
+	public void unEnchantItem(ItemStack item, ActiveEnchantment enchant) {
 		if (item.hasItemMeta()) {
 			ItemMeta meta = item.getItemMeta();
 			if (item.getItemMeta().hasLore()) {
@@ -60,8 +59,8 @@ public class EnchantManager {
 		}
 	}
 
-	public Enchantment getEnchant(String name) {
-		for (Enchantment enchant : enchants) {
+	public ActiveEnchantment getEnchant(String name) {
+		for (ActiveEnchantment enchant : enchants) {
 			if (name.contains(" ")) {
 				if (ChatColor.stripColor(name.substring(0, name.length() - (name.split(" ")[name.split(" ").length - 1].length() + 1))).equals(enchant.getName()))
 					return enchant;
@@ -73,7 +72,7 @@ public class EnchantManager {
 		return null;
 	}
 
-	public void enchantItem(ItemStack item, Enchantment ench, int tier) {
+	public void enchantItem(ItemStack item, ActiveEnchantment ench, int tier) {
 		ItemMeta meta = item.getItemMeta();
 		List<String> lore = new ArrayList<>();
 		if (meta.hasLore())
@@ -83,13 +82,13 @@ public class EnchantManager {
 		item.setItemMeta(meta);
 	}
 
-	public ArrayList<Enchantment> getEnchantsOnItem(ItemStack item) {
-		ArrayList<Enchantment> enchantsOnItem = new ArrayList<>();
+	public ArrayList<ActiveEnchantment> getEnchantsOnItem(ItemStack item) {
+		ArrayList<ActiveEnchantment> enchantsOnItem = new ArrayList<>();
 		if (item != null) {
 			if (item.hasItemMeta()) {
 				if (item.getItemMeta().hasLore()) {
 					for (String lore : item.getItemMeta().getLore()) {
-						Enchantment enchant = getEnchant(lore.substring(0, lore.length() - (lore.split(" ")[lore.split(" ").length - 1].length() + 1)));
+						ActiveEnchantment enchant = getEnchant(lore.substring(0, lore.length() - (lore.split(" ")[lore.split(" ").length - 1].length() + 1)));
 						if (enchant != null) {
 							enchantsOnItem.add(enchant);
 						}
@@ -116,12 +115,11 @@ public class EnchantManager {
 		return false;
 	}
 
-	public void createEnchant(String name, String desc, EnchantType type, int tierMax, EnchantTrigger trigger, ArrayList<Integer> chances, HashMap<Integer, ArrayList<String>> results, ArrayList<Material> affectedItems) {
-		File file = new File(main.getDataFolder() + File.separator + "Enchants", name + ".yml");
+	public void createActiveEnchant(String name, String desc, int tierMax, EnchantTrigger trigger, ArrayList<Integer> chances, HashMap<Integer, ArrayList<String>> results, ArrayList<Material> affectedItems) {
+		File file = new File(main.getDataFolder() + File.separator + "Active Enchants", name + ".yml");
 		FileConfiguration enchantFile = YamlConfiguration.loadConfiguration(file);
 		enchantFile.set("Name", name);
 		enchantFile.set("Description", desc);
-		enchantFile.set("Type", type.name());
 		enchantFile.set("TierMax", tierMax);
 		enchantFile.set("Trigger", trigger.name());
 		enchantFile.set("Chances", chances);
@@ -149,6 +147,35 @@ public class EnchantManager {
 		}
 	}
 
+	public void createPassiveEnchant(String name, String desc, int tierMax, HashMap<Integer, ArrayList<String>> results, ArrayList<Material> affectedItems) {
+		File file = new File(main.getDataFolder() + File.separator + "Passive Enchants", name + ".yml");
+		FileConfiguration enchantFile = YamlConfiguration.loadConfiguration(file);
+		enchantFile.set("Name", name);
+		enchantFile.set("Description", desc);
+		enchantFile.set("TierMax", tierMax);
+
+		for (int index : results.keySet()) {
+			ArrayList<String> resultSets = new ArrayList<>();
+			for (String resultLine : results.get(index)) {
+				resultSets.add(resultLine);
+			}
+			enchantFile.set("Results." + index, resultSets);
+		}
+
+		ArrayList<String> affectedItemNames = new ArrayList<>();
+		for (Material mat : affectedItems) {
+			affectedItemNames.add(mat.name());
+		}
+		enchantFile.set("Items", affectedItemNames);
+
+
+		try {
+			enchantFile.save(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void loadEnchants() {
 		if (main.getDataFolder().exists())
 			for (File file : new File(main.getDataFolder().getAbsolutePath() + File.separator + "Enchants").listFiles()) {
@@ -156,7 +183,6 @@ public class EnchantManager {
 
 				String name;
 				String desc;
-				EnchantType type;
 				int tierMax;
 				EnchantTrigger trigger;
 				ArrayList<Integer> chances = new ArrayList<>();
@@ -167,8 +193,6 @@ public class EnchantManager {
 				name = enchantFile.getString("Name");
 				// DESC
 				desc = enchantFile.getString("Description");
-				// TYPE
-				type = EnchantType.valueOf(enchantFile.getString("Type"));
 				// TIERMAX
 				tierMax = enchantFile.getInt("TierMax");
 				// TRIGGER
@@ -196,7 +220,7 @@ public class EnchantManager {
 				}
 				affectedItem.addAll(items);
 				// Adding to enchant list
-				enchants.add(new Enchantment(name, desc, type, tierMax, trigger, chances, results, affectedItem));
+				enchants.add(new ActiveEnchantment(name, desc, tierMax, trigger, chances, results, affectedItem));
 			}
 	}
 

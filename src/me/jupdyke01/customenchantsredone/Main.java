@@ -10,7 +10,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import me.jupdyke01.customenchantsredone.enchant.EnchantManager;
 import me.jupdyke01.customenchantsredone.enchant.commandmanager.CommandManager;
 import me.jupdyke01.customenchantsredone.enchant.enums.EnchantTrigger;
-import me.jupdyke01.customenchantsredone.enchant.enums.EnchantType;
 import me.jupdyke01.customenchantsredone.enchant.listeners.EnchantListeners;
 
 public class Main extends JavaPlugin {
@@ -61,7 +60,7 @@ public class Main extends JavaPlugin {
 		affectedItems.add(Material.DIAMOND_SWORD);
 		
 		if (!em.enchantExists("Blindness"))
-			em.createEnchant("Blindness", "Has a chance to apply blindness to an enemy!", EnchantType.Active, 3, EnchantTrigger.onPlayerHit, chances, results, affectedItems);
+			em.createActiveEnchant("Blindness", "Has a chance to apply blindness to an enemy!", 3, EnchantTrigger.onPlayerHit, chances, results, affectedItems);
 		em.loadEnchants();
 	}
 
